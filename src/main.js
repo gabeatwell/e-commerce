@@ -20,94 +20,156 @@ const paymentForm = document.getElementById("payment-form");
 
 // SEO and Analytics helper functions
 function updatePageTitle(productCount = 0) {
-  const baseTitle =
-    "Premium Products Store | Best Quality Items at Great Prices";
-  document.title =
-    productCount > 0
-      ? `${productCount} Premium Products Available | Premium Products Store`
-      : baseTitle;
+    const baseTitle =
+        "Premium Products Store | Best Quality Items at Great Prices";
+    document.title =
+        productCount > 0
+            ? `${productCount} Premium Products Available | Premium Products Store`
+            : baseTitle;
 }
 
 function updateMetaDescription(productCount = 0) {
-  const metaDesc = document.querySelector('meta[name="description"]');
-  if (metaDesc && productCount > 0) {
-    metaDesc.content = `Shop from our collection of ${productCount} high-quality products including electronics, clothing, jewelry, and home goods. Fast shipping and secure checkout.`;
-  }
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc && productCount > 0) {
+        metaDesc.content = `Shop from our collection of ${productCount} high-quality products including electronics, clothing, jewelry, and home goods. Fast shipping and secure checkout.`;
+    }
 }
 
-// Generate structured data for products
-function generateProductStructuredData() {
-  if (products.length === 0) return;
+function updateOpenGraphMeta(product) {
+    if (!product) return;
 
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    numberOfItems: products.length,
-    itemListElement: products.map((product, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "Product",
-        "@id": `https://fake-store-products.vercel.app/product/${product.id}`,
-        name: product.title,
-        description: product.description,
-        image: product.image,
-        category: product.category,
-        offers: {
-          "@type": "Offer",
-          price: product.price,
-          priceCurrency: "USD",
-          availability: "https://schema.org/InStock",
-          url: `https://fake-store-products.vercel.app/product/${product.id}`,
-        },
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: product.rating?.rate || 4.5,
-          reviewCount: product.rating?.count || 100,
-        },
-      },
-    })),
-  };
+    const setMeta = (selector, content) => {
+        const el = document.querySelector(selector);
+        if (el) el.content = content;
+    };
 
-  // Remove existing product structured data
-  const existingScript = document.getElementById("products-structured-data");
-  if (existingScript) {
-    existingScript.remove();
-  }
-
-  // Add new structured data
-  const script = document.createElement("script");
-  script.type = "application/ld+json";
-  script.id = "products-structured-data";
-  script.textContent = JSON.stringify(structuredData);
-  document.head.appendChild(script);
+    setMeta(
+        'meta[property="og:title"]',
+        `${product.title} | Premium Products Store`,
+    );
+    setMeta(
+        'meta[property="og:description"]',
+        truncateText(product.description, 160),
+    );
+    setMeta('meta[property="og:type"]', "product");
+    setMeta('meta[property="og:image"]', product.image);
+    setMeta(
+        'meta[property="og:url"]',
+        `https://fake-store-products.vercel.app/product/${product.id}`,
+    );
+    setMeta('meta[name="description"]', truncateText(product.description, 155));
+    document.title = `${product.title} | Premium Products Store`;
 }
 
-// Fetch products from API
-async function fetchProducts() {
-  try {
-    const response = await fetch("https://fakestoreapi.com/products");
-    products = await response.json();
+function resetOpenGraphMeta() {
+    const setMeta = (selector, content) => {
+        const el = document.querySelector(selector);
+        if (el) el.content = content;
+    };
 
-    // Update SEO elements
+    setMeta(
+        'meta[property="og:title"]',
+        "Premium Products Store | Best Quality Items at Great Prices",
+    );
+    setMeta(
+        'meta[property="og:description"]',
+        "Discover our curated collection of high-quality products including electronics, clothing, jewelry, and home goods.",
+    );
+    setMeta('meta[property="og:type"]', "website");
+    setMeta(
+        'meta[property="og:url"]',
+        "https://fake-store-products.vercel.app/",
+    );
+    setMeta(
+        'meta[property="og:image"]',
+        "https://fake-store-products.vercel.app/icons/og-image.png",
+    );
     updatePageTitle(products.length);
     updateMetaDescription(products.length);
-    generateProductStructuredData();
-
-    renderProducts();
-    hideLoading();
-  } catch (error) {
-    console.error("Error fetching products:", error);
-    // Update page for error state
-    updatePageTitle(0);
-    hideLoading();
-    showErrorMessage();
-  }
 }
 
-// Show error message if products fail to load
+function generateProductStructuredData() {
+    if (products.length === 0) return;
+
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Product Catalog",
+        description: "Browse our complete collection of premium products",
+        numberOfItems: products.length,
+        itemListElement: products.map((product, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            item: {
+                "@type": "Product",
+                "@id": `https://fake-store-products.vercel.app/product/${product.id}`,
+                name: product.title,
+                description: product.description,
+                image: product.image,
+                sku: `PROD-${String(product.id).padStart(4, "0")}`,
+                category: product.category,
+                brand: {
+                    "@type": "Brand",
+                    name: "Premium Products Store",
+                },
+                offers: {
+                    "@type": "Offer",
+                    price: product.price,
+                    priceCurrency: "USD",
+                    availability: "https://schema.org/InStock",
+                    url: `https://fake-store-products.vercel.app/product/${product.id}`,
+                    itemCondition: "https://schema.org/NewCondition",
+                    seller: {
+                        "@type": "Organization",
+                        name: "Premium Products Store",
+                    },
+                },
+                aggregateRating: {
+                    "@type": "AggregateRating",
+                    ratingValue: product.rating?.rate || 4.5,
+                    reviewCount: product.rating?.count || 100,
+                    bestRating: 5,
+                    worstRating: 1,
+                },
+            },
+        })),
+    };
+
+    const existingScript = document.getElementById("products-structured-data");
+    if (existingScript) {
+        existingScript.remove();
+    }
+
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = "products-structured-data";
+    script.textContent = JSON.stringify(structuredData);
+    document.head.appendChild(script);
+}
+
+async function fetchProducts() {
+    try {
+        const response = await fetch("https://fakestoreapi.com/products");
+        products = await response.json();
+
+        // Update SEO elements
+        updatePageTitle(products.length);
+        updateMetaDescription(products.length);
+        generateProductStructuredData();
+
+        renderProducts();
+        hideLoading();
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        // Update page for error state
+        updatePageTitle(0);
+        hideLoading();
+        showErrorMessage();
+    }
+}
+
 function showErrorMessage() {
-  productsGrid.innerHTML = `
+    productsGrid.innerHTML = `
     <div class="error-message" role="alert">
       <h2>Unable to load products</h2>
       <p>Please check your internet connection and try again.</p>
@@ -116,41 +178,39 @@ function showErrorMessage() {
   `;
 }
 
-// Get quantity for specific product
 function getProductQuantity(productId) {
-  const cartItem = cart.find((item) => item.id === productId);
-  return cartItem ? cartItem.quantity : 0;
+    const cartItem = cart.find((item) => item.id === productId);
+    return cartItem ? cartItem.quantity : 0;
 }
 
-// Generate clean URL-friendly slug
 function generateSlug(title) {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9 -]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+    return title
+        .toLowerCase()
+        .replace(/[^a-z0-9 -]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-");
 }
 
-// Truncate text for descriptions
 function truncateText(text, maxLength = 100) {
-  return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+    return text.length > maxLength
+        ? text.substring(0, maxLength) + "..."
+        : text;
 }
 
-// Render products to grid
 function renderProducts() {
-  productsGrid.innerHTML = products
-    .map((product) => {
-      const slug = generateSlug(product.title);
-      const rating = product.rating?.rate || 0;
-      const reviewCount = product.rating?.count || 0;
+    productsGrid.innerHTML = products
+        .map((product) => {
+            const slug = generateSlug(product.title);
+            const rating = product.rating?.rate || 0;
+            const reviewCount = product.rating?.count || 0;
 
-      return `
+            return `
         <article class="product-card" id="product-card-${
-          product.id
+            product.id
         }" itemscope itemtype="https://schema.org/Product">
             <div class="product-image-container">
-                <img 
-                    src="${product.image}" 
+                <img
+                    src="${product.image}"
                     alt="${product.title}"
                     itemprop="image"
                     loading="lazy"
@@ -159,52 +219,52 @@ function renderProducts() {
                     onerror="this.onerror=null; this.src='/icons/placeholder-product.png';"
                 >
             </div>
-            
+
             <div class="product-info">
                 <h3 itemprop="name">
-                    <a href="/product/${product.id}/${slug}" 
+                    <a href="/product/${product.id}/${slug}"
                        aria-label="View details for ${product.title}"
                        onclick="event.preventDefault(); viewProduct(${
-                         product.id
+                           product.id
                        })">
                         ${product.title}
                     </a>
                 </h3>
-                
+
                 <div class="product-rating" aria-label="Rating: ${rating} out of 5 stars">
                     <span class="stars" aria-hidden="true">${generateStars(
-                      rating
+                        rating,
                     )}</span>
                     <span class="rating-text">
-                        <span itemprop="ratingValue">${rating}</span>/5 
+                        <span itemprop="ratingValue">${rating}</span>/5
                         (<span itemprop="reviewCount">${reviewCount}</span> reviews)
                     </span>
                 </div>
-                
+
                 <p class="price" itemprop="price" content="${product.price}">
                     <span class="currency">$</span>${product.price.toFixed(2)}
                 </p>
-                
+
                 <p class="description" itemprop="description">
                     ${truncateText(product.description)}
                 </p>
-                
+
                 <meta itemprop="category" content="${product.category}">
                 <meta itemprop="availability" content="https://schema.org/InStock">
             </div>
-            
+
             <div class="product-buttons" role="group" aria-label="Product quantity controls">
-                <button 
-                    onclick="removeFromCart(${product.id})" 
+                <button
+                    onclick="removeFromCart(${product.id})"
                     class="remove-from-cart"
                     aria-label="Remove one ${product.title} from cart"
                     ${getProductQuantity(product.id) === 0 ? "disabled" : ""}
                 >
                     <i class="fa-solid fa-minus" aria-hidden="true"></i>
                 </button>
-                
-                <span 
-                    class="item-quantity" 
+
+                <span
+                    class="item-quantity"
                     id="quantity-${product.id}"
                     aria-label="Quantity in cart"
                     role="status"
@@ -212,9 +272,9 @@ function renderProducts() {
                 >
                     ${getProductQuantity(product.id)}
                 </span>
-                
-                <button 
-                    onclick="addToCart(${product.id})" 
+
+                <button
+                    onclick="addToCart(${product.id})"
                     class="add-to-cart"
                     aria-label="Add one ${product.title} to cart"
                 >
@@ -223,543 +283,485 @@ function renderProducts() {
             </div>
         </article>
     `;
-    })
-    .join("");
+        })
+        .join("");
 
-  // Update grid accessibility
-  productsGrid.setAttribute(
-    "aria-label",
-    `Product catalog with ${products.length} items`
-  );
+    productsGrid.setAttribute(
+        "aria-label",
+        `Product catalog with ${products.length} items`,
+    );
 }
 
-// Generate star rating display
 function generateStars(rating) {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
 
-  return (
-    "★".repeat(fullStars) + (hasHalfStar ? "☆" : "") + "☆".repeat(emptyStars)
-  );
+    return (
+        "★".repeat(fullStars) +
+        (hasHalfStar ? "½" : "") +
+        "☆".repeat(emptyStars)
+    );
 }
 
-// View product details (placeholder for future implementation)
 function viewProduct(productId) {
-  const product = products.find((p) => p.id === productId);
-  if (product) {
-    // This could open a product detail modal or navigate to a product page
-    console.log("Viewing product:", product.title);
-    // For now, just add to cart
-    addToCart(productId);
-  }
-}
-
-// Add item to cart
-function addToCart(productId) {
-  const product = products.find((p) => p.id === productId);
-  const existingItem = cart.find((item) => item.id === productId);
-
-  if (existingItem) {
-    existingItem.quantity += 1;
-  } else {
-    cart.push({ ...product, quantity: 1 });
-  }
-
-  updateCartUI();
-  updateProductQuantity(productId);
-
-  // Announce to screen readers
-  announceToScreenReader(`Added ${product.title} to cart`);
-}
-
-// Remove item from cart
-function removeFromCart(productId) {
-  const itemIndex = cart.findIndex((item) => item.id === productId);
-  if (itemIndex > -1) {
-    const product = cart[itemIndex];
-    if (cart[itemIndex].quantity > 1) {
-      cart[itemIndex].quantity -= 1;
-      announceToScreenReader(`Removed one ${product.title} from cart`);
-    } else {
-      cart.splice(itemIndex, 1);
-      announceToScreenReader(`Removed ${product.title} from cart completely`);
+    const product = products.find((p) => p.id === productId);
+    if (product) {
+        updateOpenGraphMeta(product);
+        console.log("Viewing product:", product.title);
+        addToCart(productId);
     }
-  }
-  updateCartUI();
-  updateProductQuantity(productId);
 }
 
-// Announce changes to screen readers
+function addToCart(productId) {
+    const product = products.find((p) => p.id === productId);
+    const existingItem = cart.find((item) => item.id === productId);
+
+    if (product) {
+        if (existingItem) {
+            existingItem.quantity++;
+        } else {
+            cart.push({ ...product, quantity: 1 });
+        }
+        updateCartUI();
+        announceToScreenReader(
+            `Added ${product.title} to cart. Quantity: ${getProductQuantity(productId)}`,
+        );
+    }
+}
+
+function removeFromCart(productId) {
+    const itemIndex = cart.findIndex((item) => item.id === productId);
+
+    if (itemIndex > -1) {
+        const product = cart[itemIndex];
+        product.quantity--;
+
+        if (product.quantity <= 0) {
+            cart.splice(itemIndex, 1);
+        }
+
+        updateCartUI();
+        announceToScreenReader(
+            `Removed one ${product.title} from cart. Quantity: ${getProductQuantity(productId)}`,
+        );
+    }
+}
+
 function announceToScreenReader(message) {
-  const announcement = document.createElement("div");
-  announcement.setAttribute("aria-live", "polite");
-  announcement.setAttribute("aria-atomic", "true");
-  announcement.className = "visually-hidden";
-  announcement.textContent = message;
+    const announcement = document.createElement("div");
+    announcement.setAttribute("role", "status");
+    announcement.setAttribute("aria-live", "polite");
+    announcement.className = "visually-hidden";
+    announcement.textContent = message;
+    document.body.appendChild(announcement);
 
-  document.body.appendChild(announcement);
-
-  // Remove after announcement
-  setTimeout(() => {
-    document.body.removeChild(announcement);
-  }, 1000);
+    setTimeout(() => {
+        document.body.removeChild(announcement);
+    }, 1000);
 }
 
-// Update quantity display for specific product
 function updateProductQuantity(productId) {
-  const quantityElement = document.getElementById(`quantity-${productId}`);
-  const removeButton = document.querySelector(
-    `[onclick="removeFromCart(${productId})"]`
-  );
-
-  if (quantityElement) {
-    quantityElement.textContent = getProductQuantity(productId);
-  }
-
-  // Update button state
-  if (removeButton) {
+    const quantityElement = document.getElementById(`quantity-${productId}`);
+    const removeButton = document.querySelector(
+        `#product-card-${productId} .remove-from-cart`,
+    );
     const quantity = getProductQuantity(productId);
-    removeButton.disabled = quantity === 0;
-    removeButton.setAttribute(
-      "aria-label",
-      quantity === 0 ? "No items to remove" : `Remove one item from cart`
-    );
-  }
+
+    if (quantityElement) {
+        quantityElement.textContent = quantity;
+    }
+    if (removeButton) {
+        removeButton.disabled = quantity === 0;
+    }
 }
 
-// Update cart UI elements
 function updateCartUI() {
-  // Update cart count
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  cartCountHeader.textContent = totalItems;
-  cartCountParagraph.textContent = totalItems;
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Update cart icon accessibility
-  cartIcon.setAttribute(
-    "aria-label",
-    `Open shopping cart with ${totalItems} item${totalItems !== 1 ? "s" : ""}`
-  );
+    cartCountHeader.textContent = totalItems;
+    cartCountParagraph.textContent = totalItems;
 
-  // Update item count for each product card
-  cart.forEach((item) => {
-    updateProductQuantity(item.id);
-  });
+    products.forEach((product) => {
+        updateProductQuantity(product.id);
+    });
 
-  // Update cart modal content
-  updateCartModal();
+    if (cartModal.classList.contains("active")) {
+        updateCartModal();
+    }
 }
 
-// Update cart modal
 function updateCartModal() {
-  if (cart.length === 0) {
-    cartModalBody.innerHTML = `
-      <div class="empty-cart" role="status">
+    if (cart.length === 0) {
+        cartModalBody.innerHTML = `
+      <div class="empty-cart">
         <p>Your cart is empty</p>
-        <p>Add some products to get started!</p>
+        <p>Browse our products and add items to your cart.</p>
       </div>
     `;
-  } else {
+        cartTotal.textContent = "0.00";
+        return;
+    }
+
     cartModalBody.innerHTML = cart
-      .map(
-        (item) => `
-        <div class="cart-item" role="listitem">
-            <img 
-              src="${item.image}" 
-              alt="${item.title}"
-              width="80"
-              height="80"
-              loading="lazy"
+        .map(
+            (item) => `
+      <div class="cart-item">
+        <img src="${item.image}" alt="${item.title}" width="80" height="80" loading="lazy">
+        <div class="cart-item-details">
+          <div class="item-info">
+            <h4>${item.title}</h4>
+            <p>$${item.price.toFixed(2)} each</p>
+          </div>
+          <div class="quantity-and-remove">
+            <span>Qty: ${item.quantity}</span>
+            <button
+              class="remove-item-btn"
+              onclick="removeItemCompletely(${item.id})"
+              aria-label="Remove all ${item.title} from cart"
             >
-            <div class="cart-item-details">
-                <div class="item-info">
-                    <h4>${item.title}</h4>
-                    <p><strong>Price:</strong> $${(
-                      item.price * item.quantity
-                    ).toFixed(2)}</p>
-                </div>
-                <div class="quantity-and-remove">
-                    <p><strong>Qty:</strong> ${item.quantity}</p>
-                    <button 
-                      onclick="removeFromCart(${item.id})"
-                      class="remove-item-btn"
-                      aria-label="Remove ${item.title} from cart"
-                      title="Remove item"
-                    >
-                      <i class="fa-solid fa-trash" aria-hidden="true"></i>
-                    </button>
-                </div>
-            </div>
+              <i class="fa-solid fa-trash" aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
-    `
-      )
-      .join("");
-  }
-
-  // Calculate subtotal, tax, and total
-  const subtotal = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-  const tax = subtotal * TAX_RATE;
-  const total = subtotal + tax;
-
-  // Update the display with subtotal, tax, and total
-  if (cart.length > 0) {
-    cartModalBody.innerHTML += `
-      <div class="cart-summary" role="region" aria-labelledby="cart-summary-heading">
-          <h4 id="cart-summary-heading" class="visually-hidden">Order Summary</h4>
-          <div class="summary-line">
-              <span>Subtotal:</span>
-              <span>$${subtotal.toFixed(2)}</span>
-          </div>
-          <div class="summary-line">
-              <span>Tax (8.875%):</span>
-              <span>$${tax.toFixed(2)}</span>
-          </div>
-          <div class="summary-line total">
-              <span>Total:</span>
-              <span>$${total.toFixed(2)}</span>
-          </div>
       </div>
-    `;
-  }
+    `,
+        )
+        .join("");
 
-  // Update total
-  cartTotal.textContent = total.toFixed(2);
-
-  // Update checkout button state
-  const checkoutButton = document.getElementById("checkout-button");
-  if (checkoutButton) {
-    checkoutButton.disabled = cart.length === 0;
-    checkoutButton.setAttribute(
-      "aria-label",
-      cart.length === 0
-        ? "Cart is empty"
-        : `Complete purchase for $${total.toFixed(2)}`
+    const subtotal = cart.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0,
     );
-  }
+    const tax = subtotal * TAX_RATE;
+    const total = subtotal + tax;
+
+    cartModalBody.innerHTML += `
+    <div class="cart-summary">
+      <div class="summary-line">
+        <span>Subtotal</span>
+        <span>$${subtotal.toFixed(2)}</span>
+      </div>
+      <div class="summary-line">
+        <span>Tax (8.875%)</span>
+        <span>$${tax.toFixed(2)}</span>
+      </div>
+      <div class="summary-line total">
+        <span>Total</span>
+        <span>$${total.toFixed(2)}</span>
+      </div>
+    </div>
+  `;
+
+    cartTotal.textContent = total.toFixed(2);
+
+    const checkoutButton = document.getElementById("checkout-button");
+    if (checkoutButton) {
+        checkoutButton.disabled = cart.length === 0;
+    }
 }
 
-// Loading handlers
+function removeItemCompletely(productId) {
+    const itemIndex = cart.findIndex((item) => item.id === productId);
+    if (itemIndex > -1) {
+        const product = cart[itemIndex];
+        cart.splice(itemIndex, 1);
+        updateCartUI();
+        announceToScreenReader(`Removed all ${product.title} from cart`);
+    }
+}
+window.removeItemCompletely = removeItemCompletely;
+
 function hideLoading() {
-  loadingContainer.classList.add("hidden");
-  mainContent.classList.add("visible");
-
-  // Set focus to main content for screen readers
-  const mainElement = document.getElementById("main");
-  if (mainElement) {
-    mainElement.focus();
-  }
+    loadingContainer.classList.add("hidden");
+    const mainElement = document.querySelector(".main-content");
+    if (mainElement) {
+        mainElement.classList.add("visible");
+    }
 }
 
-// Modal handlers
 function openModal() {
-  cartModal.style.display = "flex";
-  cartModal.setAttribute("aria-hidden", "false");
-  cartModal.offsetHeight; // Force reflow
-  cartModal.classList.add("active");
-  updateCartModal();
+    cartModal.classList.add("active");
+    cartModal.setAttribute("aria-hidden", "false");
+    updateCartModal();
 
-  // Focus management
-  const closeButton = cartModal.querySelector(".close");
-  if (closeButton) {
-    closeButton.focus();
-  }
+    const closeButton = cartModal.querySelector(".close");
+    if (closeButton) {
+        closeButton.focus();
+    }
 
-  // Trap focus in modal
-  trapFocus(cartModal);
-
-  // Prevent body scroll
-  document.body.style.overflow = "hidden";
+    setupFocusTrap();
 }
 
 function closeModal() {
-  cartModal.classList.remove("active");
-  cartModal.setAttribute("aria-hidden", "true");
+    cartModal.classList.remove("active");
+    cartModal.setAttribute("aria-hidden", "true");
 
-  // Restore focus to cart icon
-  cartIcon.focus();
+    resetOpenGraphMeta();
 
-  // Remove focus trap
-  removeFocusTrap();
+    removeFocusTrap();
 
-  // Restore body scroll
-  document.body.style.overflow = "";
-
-  setTimeout(() => {
-    cartModal.style.display = "none";
-  }, 500);
+    cartIcon.focus();
 }
 
-// Focus trap for modal accessibility
 let focusableElements = [];
 let firstFocusableElement = null;
 let lastFocusableElement = null;
 
-function trapFocus(modal) {
-  focusableElements = modal.querySelectorAll(
-    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-  );
-  firstFocusableElement = focusableElements[0];
-  lastFocusableElement = focusableElements[focusableElements.length - 1];
-
-  modal.addEventListener("keydown", handleFocusTrap);
+function setupFocusTrap() {
+    focusableElements = cartModal.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    if (focusableElements.length > 0) {
+        firstFocusableElement = focusableElements[0];
+        lastFocusableElement = focusableElements[focusableElements.length - 1];
+    }
+    document.addEventListener("keydown", handleFocusTrap);
 }
 
 function handleFocusTrap(e) {
-  if (e.key === "Tab") {
-    if (e.shiftKey) {
-      if (document.activeElement === firstFocusableElement) {
-        lastFocusableElement.focus();
-        e.preventDefault();
-      }
-    } else {
-      if (document.activeElement === lastFocusableElement) {
-        firstFocusableElement.focus();
-        e.preventDefault();
-      }
-    }
-  }
+    if (e.key !== "Tab") return;
 
-  if (e.key === "Escape") {
-    closeModal();
-  }
+    if (e.shiftKey) {
+        if (document.activeElement === firstFocusableElement) {
+            e.preventDefault();
+            lastFocusableElement.focus();
+        }
+    } else {
+        if (document.activeElement === lastFocusableElement) {
+            e.preventDefault();
+            firstFocusableElement.focus();
+        }
+    }
 }
 
 function removeFocusTrap() {
-  cartModal.removeEventListener("keydown", handleFocusTrap);
+    document.removeEventListener("keydown", handleFocusTrap);
 }
 
-// Form validation
 function validateForm() {
-  const form = document.getElementById("payment-form");
-  const inputs = form.querySelectorAll("input[required]");
-  let isValid = true;
+    const form = paymentForm;
+    const inputs = form.querySelectorAll("input[required]");
+    let isValid = true;
 
-  inputs.forEach((input) => {
-    const errorElement = document.getElementById(input.id + "-error");
+    inputs.forEach((input) => {
+        const errorElement = document.getElementById(input.id + "-error");
 
-    if (!input.value.trim()) {
-      showError(input, errorElement, "This field is required");
-      isValid = false;
-    } else if (input.id === "card-number" && !validateCardNumber(input.value)) {
-      showError(input, errorElement, "Please enter a valid card number");
-      isValid = false;
-    } else if (input.id === "expiry-date" && !validateExpiryDate(input.value)) {
-      showError(
-        input,
-        errorElement,
-        "Please enter a valid expiry date (MM/YY)"
-      );
-      isValid = false;
-    } else if (input.id === "cvv" && !validateCVV(input.value)) {
-      showError(input, errorElement, "Please enter a valid CVV");
-      isValid = false;
-    } else {
-      clearError(input, errorElement);
-    }
-  });
+        if (!input.value.trim()) {
+            showError(input, errorElement, "This field is required");
+            isValid = false;
+        } else if (
+            input.id === "card-number" &&
+            !validateCardNumber(input.value)
+        ) {
+            showError(input, errorElement, "Please enter a valid card number");
+            isValid = false;
+        } else if (
+            input.id === "expiry-date" &&
+            !validateExpiryDate(input.value)
+        ) {
+            showError(input, errorElement, "Please enter a valid date (MM/YY)");
+            isValid = false;
+        } else if (input.id === "cvv" && !validateCVV(input.value)) {
+            showError(input, errorElement, "Please enter a valid CVV");
+            isValid = false;
+        } else {
+            clearError(input, errorElement);
+        }
+    });
 
-  return isValid;
+    return isValid;
 }
 
 function showError(input, errorElement, message) {
-  input.classList.add("error");
-  input.setAttribute("aria-invalid", "true");
-  if (errorElement) {
-    errorElement.textContent = message;
-  }
+    input.classList.add("error");
+    input.setAttribute("aria-invalid", "true");
+    if (errorElement) {
+        errorElement.textContent = message;
+    }
 }
 
 function clearError(input, errorElement) {
-  input.classList.remove("error");
-  input.setAttribute("aria-invalid", "false");
-  if (errorElement) {
-    errorElement.textContent = "";
-  }
+    input.classList.remove("error");
+    input.removeAttribute("aria-invalid");
+    if (errorElement) {
+        errorElement.textContent = "";
+    }
 }
 
-function validateCardNumber(cardNumber) {
-  const cleaned = cardNumber.replace(/\s/g, "");
-  return /^\d{13,19}$/.test(cleaned);
+function validateCardNumber(value) {
+    const cleaned = value.replace(/\s/g, "");
+    return /^\d{13,19}$/.test(cleaned);
 }
 
-function validateExpiryDate(expiry) {
-  return /^(0[1-9]|1[0-2])\/([0-9]{2})$/.test(expiry);
+function validateExpiryDate(value) {
+    return /^(0[1-9]|1[0-2])\/\d{2}$/.test(value);
 }
 
-function validateCVV(cvv) {
-  return /^\d{3,4}$/.test(cvv);
+function validateCVV(value) {
+    return /^\d{3,4}$/.test(value);
 }
 
-// Event Listeners
-cartIcon.addEventListener("click", openModal);
-cartIcon.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") {
-    e.preventDefault();
-    openModal();
-  }
-});
-
-closeModalBtn.addEventListener("click", closeModal);
-
-window.addEventListener("click", (event) => {
-  if (event.target === cartModal) {
-    closeModal();
-  }
-});
-
-// Enhanced form submission with validation
-paymentForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-
-  if (!validateForm()) {
-    announceToScreenReader("Please fix the errors in the form");
-    return;
-  }
-
-  if (cart.length === 0) {
-    announceToScreenReader("Your cart is empty");
-    return;
-  }
-
-  // Simulate payment processing
-  const submitButton = document.getElementById("checkout-button");
-  const originalText = submitButton.textContent;
-
-  submitButton.disabled = true;
-  submitButton.textContent = "Processing...";
-
-  setTimeout(() => {
-    const total = cartTotal.textContent;
-    alert(`Order placed successfully! Total: $${total}`);
-
-    // Generate order confirmation structured data
-    generateOrderStructuredData();
-
-    // Reset cart and form
-    cart = [];
-    updateCartUI();
-    paymentForm.reset();
-    closeModal();
-
-    // Reset button
-    submitButton.disabled = false;
-    submitButton.textContent = originalText;
-
-    announceToScreenReader("Order placed successfully!");
-  }, 2000);
-});
-
-// Generate order confirmation structured data
 function generateOrderStructuredData() {
-  const orderData = {
-    "@context": "https://schema.org",
-    "@type": "Order",
-    orderNumber: Date.now().toString(),
-    orderDate: new Date().toISOString(),
-    orderStatus: "https://schema.org/OrderProcessing",
-    customer: {
-      "@type": "Person",
-      name: document.getElementById("card-name")?.value || "Customer",
-    },
-    orderedItem: cart.map((item) => ({
-      "@type": "OrderItem",
-      orderedItem: {
-        "@type": "Product",
-        name: item.title,
-        price: item.price,
-        image: item.image,
-      },
-      orderQuantity: item.quantity,
-    })),
-    totalPaymentDue: {
-      "@type": "MonetaryAmount",
-      currency: "USD",
-      value: cartTotal.textContent,
-    },
-  };
+    const subtotal = cart.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0,
+    );
+    const total = subtotal * (1 + TAX_RATE);
 
-  console.log("Order placed:", orderData);
+    const orderData = {
+        "@context": "https://schema.org",
+        "@type": "Order",
+        orderNumber: `ORD-${Date.now()}`,
+        orderDate: new Date().toISOString(),
+        orderStatus: "https://schema.org/OrderProcessing",
+        customer: {
+            "@type": "Person",
+            name: document.getElementById("card-name")?.value || "Customer",
+        },
+        acceptedOffer: {
+            "@type": "Offer",
+            priceCurrency: "USD",
+            price: total.toFixed(2),
+        },
+        orderedItem: cart.map((item) => ({
+            "@type": "OrderItem",
+            orderedItem: {
+                "@type": "Product",
+                name: item.title,
+                image: item.image,
+                offers: {
+                    "@type": "Offer",
+                    price: item.price,
+                    priceCurrency: "USD",
+                },
+            },
+            orderQuantity: item.quantity,
+        })),
+    };
+
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = "order-structured-data";
+    script.textContent = JSON.stringify(orderData);
+    document.head.appendChild(script);
 }
 
-// Real-time form validation
-paymentForm.addEventListener("input", (e) => {
-  const input = e.target;
-  const errorElement = document.getElementById(input.id + "-error");
+paymentForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  // Clear previous errors on input
-  if (input.value.trim()) {
-    clearError(input, errorElement);
-  }
+    if (!validateForm()) return;
+
+    const submitButton = document.getElementById("checkout-button");
+    const originalText = submitButton.textContent;
+
+    submitButton.disabled = true;
+    submitButton.textContent = "Processing...";
+
+    try {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        generateOrderStructuredData();
+
+        const total =
+            cart.reduce((sum, item) => sum + item.price * item.quantity, 0) *
+            (1 + TAX_RATE);
+
+        alert(
+            `Order placed successfully! Total: $${total.toFixed(2)}. Thank you for shopping with us.`,
+        );
+        cart = [];
+        updateCartUI();
+        closeModal();
+    } catch (error) {
+        console.error("Payment error:", error);
+        alert("Payment failed. Please try again.");
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = originalText;
+    }
 });
 
-// Keyboard navigation improvements
+paymentForm?.addEventListener("input", (e) => {
+    const input = e.target;
+    if (input.tagName !== "INPUT") return;
+
+    const errorElement = document.getElementById(input.id + "-error");
+
+    if (input.value.trim()) {
+        clearError(input, errorElement);
+    }
+});
+
 document.addEventListener("keydown", (e) => {
-  // Close modal on Escape
-  if (e.key === "Escape" && cartModal.classList.contains("active")) {
-    closeModal();
-  }
+    if (e.key === "Escape" && cartModal.classList.contains("active")) {
+        closeModal();
+    }
 });
 
-// Performance optimization - Lazy load images
+cartIcon?.addEventListener("click", openModal);
+closeModalBtn?.addEventListener("click", closeModal);
+
+cartModal?.addEventListener("click", (e) => {
+    if (e.target === cartModal) {
+        closeModal();
+    }
+});
+
 function setupLazyLoading() {
-  const images = document.querySelectorAll('img[loading="lazy"]');
+    const images = document.querySelectorAll('img[loading="lazy"]');
 
-  if ("IntersectionObserver" in window) {
-    const imageObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const img = entry.target;
-          img.src = img.dataset.src || img.src;
-          img.classList.remove("lazy");
-          observer.unobserve(img);
-        }
-      });
-    });
+    if ("IntersectionObserver" in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src || img.src;
+                    img.classList.remove("lazy");
+                    observer.unobserve(img);
+                }
+            });
+        });
 
-    images.forEach((img) => imageObserver.observe(img));
-  }
+        images.forEach((img) => imageObserver.observe(img));
+    }
 }
 
-// Make functions available globally
 window.addToCart = addToCart;
 window.removeFromCart = removeFromCart;
 window.viewProduct = viewProduct;
 
 // SEO: Add breadcrumb structured data
 function addBreadcrumbStructuredData() {
-  const breadcrumbData = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: "https://fake-store-products.vercel.app/",
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "Products",
-        item: "https://fake-store-products.vercel.app/",
-      },
-    ],
-  };
+    const breadcrumbData = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: "https://fake-store-products.vercel.app/",
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: "Products",
+                item: "https://fake-store-products.vercel.app/",
+            },
+        ],
+    };
 
-  const script = document.createElement("script");
-  script.type = "application/ld+json";
-  script.textContent = JSON.stringify(breadcrumbData);
-  document.head.appendChild(script);
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = "breadcrumb-structured-data";
+    script.textContent = JSON.stringify(breadcrumbData);
+    document.head.appendChild(script);
 }
 
-// Initialize everything
 document.addEventListener("DOMContentLoaded", () => {
-  addBreadcrumbStructuredData();
-  setupLazyLoading();
+    addBreadcrumbStructuredData();
+    setupLazyLoading();
 });
 
-// Initialize
 fetchProducts();
