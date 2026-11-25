@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "target": "esnext"
+    },
+    "include": ["api/**/*.js", "src/**/*.js"],
+    "exclude": ["node_modules"]
+}

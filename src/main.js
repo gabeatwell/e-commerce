@@ -52,7 +52,10 @@ function updateOpenGraphMeta(product) {
         truncateText(product.description, 160),
     );
     setMeta('meta[property="og:type"]', "product");
-    setMeta('meta[property="og:image"]', product.image);
+    setMeta(
+        'meta[property="og:image"]',
+        "https://fake-store-products.vercel.app/api/og",
+    );
     setMeta(
         'meta[property="og:url"]',
         `https://fake-store-products.vercel.app/product/${product.id}`,
