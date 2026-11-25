@@ -1,5 +1,12 @@
 {
-    "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+    "functions": {
+        "api/og.js": {
+            "runtime": "nodejs22.x",
+            "memory": 1024,
+            "maxDuration": 30
+        }
+    },
+    "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }],
     "headers": [
         {
             "source": "/(.*)",
