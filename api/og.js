@@ -7,7 +7,7 @@ const h = (type, props, ...children) => ({
 });
 
 export const config = {
-    runtime: "edge",
+    runtime: "nodejs",
 };
 
 export default function handler(req) {
